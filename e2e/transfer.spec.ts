@@ -5,7 +5,7 @@ test.describe('Transfer Flow', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -65,7 +65,7 @@ test.describe('Account Creation Flow', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -95,7 +95,7 @@ test.describe('Navigation', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })

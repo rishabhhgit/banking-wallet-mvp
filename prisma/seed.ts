@@ -13,7 +13,7 @@ async function seed() {
   await prisma.user.deleteMany()
 
   // Create demo users
-  const password = await bcrypt.hash('Password123!', 12)
+  const password = await bcrypt.hash('Password123', 12)
 
   const alice = await prisma.user.create({
     data: {
@@ -127,9 +127,9 @@ async function seed() {
 
   console.log('\n--- Seed Complete ---')
   console.log('Demo credentials:')
-  console.log('  alice@example.com / Password123!')
-  console.log('  bob@example.com / Password123!')
-  console.log('  charlie@example.com / Password123!')
+  console.log('  alice@example.com / Password123')
+  console.log('  bob@example.com / Password123')
+  console.log('  charlie@example.com / Password123')
 }
 
 seed()

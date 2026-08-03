@@ -22,7 +22,7 @@ test.describe('Authentication Flow', () => {
 
     // Fill in login form
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
 
     // Submit form
     await page.click('button[type="submit"]')
@@ -51,7 +51,7 @@ test.describe('Dashboard', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -76,7 +76,7 @@ test.describe('Wallets', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -105,7 +105,7 @@ test.describe('Transactions', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -123,7 +123,7 @@ test.describe('Security', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })
@@ -141,7 +141,7 @@ test.describe('Settings', () => {
     // Login before each test
     await page.goto('/login')
     await page.fill('input[name="email"]', 'alice@example.com')
-    await page.fill('input[name="password"]', 'Password123!')
+    await page.fill('input[name="password"]', 'Password123')
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/')
   })

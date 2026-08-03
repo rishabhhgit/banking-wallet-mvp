@@ -34,6 +34,7 @@ CREATE TABLE "transactions" (
     "status" TEXT NOT NULL DEFAULT 'COMPLETED',
     "debitAccountId" TEXT,
     "creditAccountId" TEXT,
+    "idempotencyKey" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
