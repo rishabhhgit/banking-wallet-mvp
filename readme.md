@@ -1,6 +1,6 @@
 # Banking/Wallet System MVP
 
-A production-grade banking and wallet system built with Node.js, TypeScript, PostgreSQL, and Redis. Features atomic money transfers with serializable isolation, distributed idempotency, real-time SSE streaming, audit logging, and a Next.js admin dashboard.
+A production-grade banking and wallet system built with Node.js, TypeScript, PostgreSQL, and Redis. Features atomic money transfers with serializable isolation, distributed idempotency, real-time SSE streaming, audit logging, SMTP email service, Google OAuth, and a Next.js admin dashboard.
 
 ## Tech Stack
 
@@ -14,7 +14,8 @@ A production-grade banking and wallet system built with Node.js, TypeScript, Pos
 | ORM | Prisma | ^6.14.0 |
 | Database | PostgreSQL | 16 |
 | Cache / Queue | Redis + BullMQ | 7.x |
-| Auth | JWT + bcrypt | ^9.0.2 / ^3.0.2 |
+| Auth | JWT + bcrypt + Google OAuth | ^9.0.2 / ^3.0.2 / Passport.js |
+| Email | Nodemailer (SMTP) | ^6.x |
 | Validation | Zod | ^4.1.3 |
 | Logging | Pino | ^9.x |
 | Testing | Jest + ts-jest | ^30.x |
@@ -170,6 +171,11 @@ Every significant event is logged to the `audit_events` table:
 | POST | `/api/users/register` | No | Register new user |
 | POST | `/api/users/login` | No | Login |
 | POST | `/api/users/refresh` | No | Refresh access token |
+| POST | `/api/users/logout` | Yes | Logout (blacklists tokens) |
+| POST | `/api/users/forgot-password` | No | Request password reset email |
+| POST | `/api/users/reset-password` | No | Reset password with token |
+| GET | `/api/users/google` | No | Initiate Google OAuth login |
+| GET | `/api/users/google/callback` | No | Google OAuth callback |
 | POST | `/api/accounts` | Yes | Create checking/savings account |
 | GET | `/api/accounts` | Yes | List all accounts |
 | POST | `/api/transactions` | Yes | Transfer money (idempotent) |
@@ -187,15 +193,24 @@ banking_app_backend-main/
 │   └── seed.ts                 # Database seeder with demo data
 ├── src/
 │   ├── server.ts               # Express app, middleware, health checks, graceful shutdown
+│   ├── config/
+│   │   └── google-auth.ts      # Google OAuth Passport.js configuration
 │   ├── lib/
 │   │   ├── db.ts               # Prisma client singleton
 │   │   ├── redis.ts            # Redis client with retry strategy
 │   │   ├── logger.ts           # Pino structured logger
+│   │   ├── metrics.ts          # Prometheus-compatible metrics
+│   │   ├── sentry.ts           # Sentry error tracking
+│   │   ├── cache.ts            # Redis caching service
+│   │   ├── circuit-breaker.ts  # Circuit breaker pattern
 │   │   └── shutdown.ts         # Graceful shutdown handler
 │   ├── types/index.ts          # Zod schemas + TypeScript types
 │   ├── middleware/
-│   │   ├── auth.ts             # JWT authentication middleware
-│   │   └── rateLimit.ts        # Rate limiters (auth, API, transfer)
+│   │   ├── auth.ts             # JWT authentication + blacklist check
+│   │   ├── rateLimit.ts        # Rate limiters (auth, API, transfer)
+│   │   ├── userRateLimit.ts    # Per-user distributed rate limiting
+│   │   ├── csp.ts              # Content Security Policy headers
+│   │   └── sanitize.ts         # XSS/SQL injection protection
 │   ├── utils/auth.ts           # Password hashing & JWT helpers
 │   ├── repositories/           # Database queries (Prisma)
 │   ├── controllers/            # Request handlers
@@ -203,13 +218,18 @@ banking_app_backend-main/
 │   │   ├── streaming.service.ts    # SSE client management
 │   │   ├── idempotency.service.ts  # Redis-backed idempotency + distributed locks
 │   │   ├── audit.service.ts        # Event audit logging
-│   │   └── queue.service.ts        # BullMQ job queues
+│   │   ├── queue.service.ts        # BullMQ job queues
+│   │   ├── token.service.ts        # Token blacklist + password reset tokens
+│   │   └── email.service.ts        # SMTP email service (Nodemailer)
 │   ├── routes/                 # Route definitions
 │   └── __tests__/              # Jest test suites (38 tests)
 ├── frontend/                   # Next.js admin dashboard
+├── e2e/                        # Playwright E2E tests
+├── loadtests/                  # k6 load tests
 ├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
 ├── docker-compose.yml          # PostgreSQL + Redis + API + Frontend
 ├── Dockerfile                  # Multi-stage production build
+├── playwright.config.ts        # Playwright E2E configuration
 ├── jest.config.ts              # Jest configuration
 ├── package.json
 ├── tsconfig.json
@@ -260,21 +280,66 @@ npm run dev
 ### Environment Variables
 
 ```env
+# Database
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/banking_dev"
+
+# Redis
 REDIS_URL="redis://localhost:6379"
+
+# Auth
 JWT_SECRET="your-super-secret-jwt-key-minimum-32-characters"
 JWT_EXPIRES_IN="15m"
+REFRESH_TOKEN_EXPIRES_IN="7d"
+
+# Server
 PORT=8000
 NODE_ENV="development"
+API_URL="http://localhost:8000"
+FRONTEND_URL="http://localhost:3000"
+
+# CORS
 ALLOWED_ORIGINS="http://localhost:3000"
+
+# Logging
 LOG_LEVEL="debug"
+
+# Sentry (Error Tracking)
+SENTRY_DSN=""
+SENTRY_ENVIRONMENT="development"
+
+# SMTP Email (Nodemailer)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+SMTP_FROM="your-email@gmail.com"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
+
+> **Note:** In development mode (`NODE_ENV !== 'production'`), CORS allows all origins for local development convenience. In production, only origins listed in `ALLOWED_ORIGINS` are allowed.
+
+> **Note:** If SMTP credentials are not configured, emails are logged to console instead of being sent.
 
 ### Run Tests
 
 ```bash
-# All tests
+# Unit tests
 npm test
+
+# Unit tests only (no integration)
+npm test -- --testPathIgnorePatterns=integration
+
+# Integration tests (requires Docker)
+npm run test:integration
+
+# E2E tests (requires running servers)
+npm run test:e2e
+
+# E2E tests with UI
+npm run test:e2e:ui
 
 # Watch mode
 npm run test:watch
@@ -340,6 +405,11 @@ Server handles SIGTERM/SIGINT:
 8. **Graceful shutdown** -- Clean cleanup of connections and workers on process termination
 9. **Password excluded from responses** -- Repository layer uses Prisma `select` to omit password
 10. **Request ID tracking** -- UUID propagated through logs and responses for debugging
+11. **Token blacklisting** -- Logged-out tokens are revoked via Redis blacklist
+12. **Password reset flow** -- Secure token-based reset with 1-hour expiry, sent via SMTP
+13. **Google OAuth** -- Social login via Passport.js, creates user on first login
+14. **CORS flexibility** -- Allows all origins in dev, restricted in production
+15. **SMTP email service** -- Nodemailer with graceful fallback (logs when unconfigured)
 
 ## Deployment
 
@@ -374,6 +444,18 @@ railway variables set DATABASE_URL="your-postgres-url"
 railway variables set REDIS_URL="your-redis-url"
 railway variables set JWT_SECRET="your-minimum-32-char-secret"
 railway variables set NODE_ENV="production"
+railway variables set API_URL="https://your-backend-url.railway.app"
+railway variables set FRONTEND_URL="https://your-frontend-url.vercel.app"
+
+# SMTP (for password reset emails)
+railway variables set SMTP_HOST="smtp.gmail.com"
+railway variables set SMTP_PORT=587
+railway variables set SMTP_USER="your-email@gmail.com"
+railway variables set SMTP_PASS="your-app-password"
+
+# Google OAuth (optional)
+railway variables set GOOGLE_CLIENT_ID="your-google-client-id"
+railway variables set GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # Deploy
 railway up
