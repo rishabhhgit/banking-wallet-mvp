@@ -91,30 +91,41 @@ All modules export standalone functions (no classes).
 ### Database Schema
 
 ```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────────┐
-│      User       │       │     Account     │       │    Transaction      │
-├─────────────────┤       ├─────────────────┤       ├─────────────────────┤
-│ id       (PK)  │──1:N──│ id       (PK)  │──1:N──│ id           (PK)   │
-│ email    (UQ)  │       │ userId   (FK)  │       │ amount              │
-│ password       │       │ name            │       │ description         │
-│ firstName      │       │ balance (Dec)   │       │ type                │
-│ lastName       │       │ currency        │       │ status              │
-│ createdAt      │       │ type            │       │ debitAccountId (FK) │
-│ updatedAt      │       │ createdAt       │       │ creditAccountId(FK) │
-└─────────────────┘       │ updatedAt       │       │ createdAt           │
-                          └─────────────────┘       │ updatedAt           │
-                                                    └─────────────────────┘
-                                                            │
-                          ┌─────────────────┐               │
-                          │   AuditEvent    │               │
-                          ├─────────────────┤               │
-                          │ id       (PK)  │               │
-                          │ eventType      │               │
-                          │ userId    (FK) │               │
-                          │ metadata       │               │
-                          │ createdAt      │               │
-                          └─────────────────┘               │
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────────────┐
+│      User       │       │     Account     │       │      Transaction        │
+├─────────────────┤       ├─────────────────┤       ├─────────────────────────┤
+│ id       (PK)  │──1:N──│ id       (PK)  │──1:N──│ id           (PK)      │
+│ email    (UQ)  │       │ userId   (FK)  │       │ amount                  │
+│ password       │       │ name            │       │ description             │
+│ firstName      │       │ balance (Dec)   │       │ type                    │
+│ lastName       │       │ currency        │       │ status                  │
+│ createdAt      │       │ type            │       │ debitAccountId (FK)     │
+│ updatedAt      │       │ createdAt       │       │ creditAccountId (FK)    │
+└─────────────────┘       │ updatedAt       │       │ idempotencyKey (UQ)     │
+                          └─────────────────┘       │ createdAt               │
+                                                    │ updatedAt               │
+                                                    └─────────────────────────┘
+
+┌─────────────────┐
+│   AuditEvent    │
+├─────────────────┤
+│ id       (PK)  │
+│ eventType      │
+│ userId    (FK) │──────→ User (optional)
+│ metadata       │
+│ createdAt      │
+└─────────────────┘
 ```
+
+**Relationships:**
+- `User` 1:N `Account` — A user owns multiple accounts
+- `Account` 1:N `Transaction` — An account has debit and credit transactions
+- `User` 1:N `AuditEvent` — A user has multiple audit events (optional)
+
+**Indexes:**
+- `accounts`: `userId`
+- `transactions`: `debitAccountId`, `creditAccountId`, `status`, `createdAt`, `idempotencyKey`
+- `audit_events`: `eventType`, `userId`, `createdAt`
 
 ### Money Transfer Flow
 
