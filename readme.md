@@ -6,131 +6,161 @@ A production-grade banking and wallet system built with Node.js, TypeScript, Pos
 
 ### Backend
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Language | TypeScript | ^5.9.2 |
-| Runtime | Node.js | 18+ |
-| Framework | Express.js | ^5.1.0 |
-| ORM | Prisma | ^6.14.0 |
-| Database | PostgreSQL | 16 |
-| Cache / Queue | Redis + BullMQ | 7.x |
-| Auth | JWT + bcrypt + Google OAuth | ^9.0.2 / ^3.0.2 / Passport.js |
-| Email | Nodemailer (SMTP) | ^6.x |
-| Validation | Zod | ^4.1.3 |
-| Logging | Pino | ^9.x |
-| Testing | Jest + ts-jest | ^30.x |
-| Security | Helmet, CORS, Rate Limiting | — |
+| Layer       | Technology                      | Version                |
+| ----------- | ------------------------------- | ---------------------- |
+| Language    | TypeScript                      | ^5.9.2                 |
+| Runtime     | Node.js                         | 18+                    |
+| Framework   | Express.js                      | ^5.1.0                 |
+| ORM         | Prisma                          | ^6.14.0                |
+| Database    | PostgreSQL                      | 16                     |
+| Cache/Queue | Redis + BullMQ                  | 7.x                    |
+| Auth        | JWT + bcrypt + Google OAuth     | ^9.0.2 / ^3.0.2        |
+| Email       | Nodemailer (SMTP)               | ^6.x                   |
+| Validation  | Zod                             | ^4.1.3                 |
+| Logging     | Pino                            | ^9.x                   |
+| Testing     | Jest + ts-jest                  | ^30.x                  |
+| Security    | Helmet, CORS, Rate Limiting     | —                      |
 
 ### Frontend
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | Next.js | ^16.2.12 |
-| Language | TypeScript | ^5.9.2 |
-| Styling | Tailwind CSS | ^4.x |
-| UI Components | React | ^19.x |
-| Icons | Lucide React | ^0.525.0 |
-| Fonts | DM Sans, JetBrains Mono | Google Fonts |
+| Layer      | Technology | Version    |
+| ---------- | ---------- | ---------- |
+| Framework  | Next.js    | ^16.2.12   |
+| Language   | TypeScript | ^5.9.2     |
+| Styling    | Tailwind   | ^4.x       |
+| UI         | React      | ^19.x      |
+| Icons      | Lucide     | ^0.525.0   |
+| Fonts      | DM Sans    | Google     |
 
 ### Infrastructure
 
-| Layer | Technology |
-|-------|-----------|
-| Containerization | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
-| Process Management | Graceful shutdown with cleanup |
+| Layer             | Technology                  |
+| ----------------- | --------------------------- |
+| Containerization  | Docker + Docker Compose     |
+| CI/CD             | GitHub Actions              |
+| Process Mgmt      | Graceful shutdown + cleanup |
 
 ## Architecture
 
 ### System Overview
 
 ```
-                         ┌─────────────────────────────────────┐
-                         │           Load Balancer              │
-                         └─────────────────┬───────────────────┘
-                                           │
-                         ┌─────────────────▼───────────────────┐
-                         │         Express.js Server           │
-                         │  ┌───────────────────────────────┐  │
-                         │  │  Middleware Pipeline           │  │
-                         │  │  helmet → cors → request-id    │  │
-                         │  │  → logger → json → rate-limit  │  │
-                         │  └───────────────────────────────┘  │
-                         │                                     │
-                         │  ┌──────────┐ ┌──────────────────┐  │
-                         │  │  Routes  │ │  Health Checks   │  │
-                         │  └────┬─────┘ └──────────────────┘  │
-                         │       │                             │
-                         │  ┌────▼─────────────────────────┐   │
-                         │  │       Controllers            │   │
-                         │  │  Zod → Auth → Business Logic │   │
-                         │  └────────────┬─────────────────┘   │
-                         │               │                     │
-                         │  ┌────────────▼─────────────────┐   │
-                         │  │       Repositories           │   │
-                         │  │  Prisma → Database Queries   │   │
-                         │  └────────────┬─────────────────┘   │
-                         └───────────────┼─────────────────────┘
-                                         │
-                    ┌────────────────────┬┴───────────────────┐
-                    │                    │                     │
-           ┌────────▼────────┐  ┌───────▼───────┐  ┌────────▼────────┐
-           │   PostgreSQL    │  │     Redis     │  │   BullMQ Queue  │
-           │   (Primary)     │  │  (Cache/Lock) │  │  (Background)   │
-           └─────────────────┘  └───────────────┘  └─────────────────┘
+                          ┌─────────────────────────────────────┐
+                          │           Load Balancer              │
+                          └─────────────────┬───────────────────┘
+                                            │
+                          ┌─────────────────▼───────────────────┐
+                          │         Express.js Server           │
+                          │  ┌───────────────────────────────┐  │
+                          │  │  Middleware Pipeline           │  │
+                          │  │  helmet → cors → request-id    │  │
+                          │  │  → logger → json → rate-limit  │  │
+                          │  └───────────────────────────────┘  │
+                          │                                     │
+                          │  ┌──────────┐ ┌──────────────────┐  │
+                          │  │  Routes  │ │  Health Checks   │  │
+                          │  └────┬─────┘ └──────────────────┘  │
+                          │       │                             │
+                          │  ┌────▼─────────────────────────┐   │
+                          │  │       Controllers            │   │
+                          │  │  Zod → Auth → Business Logic │   │
+                          │  └────────────┬─────────────────┘   │
+                          │               │                     │
+                          │  ┌────────────▼─────────────────┐   │
+                          │  │       Repositories           │   │
+                          │  │  Prisma → Database Queries   │   │
+                          │  └────────────┬─────────────────┘   │
+                          └───────────────┼─────────────────────┘
+                                          │
+                     ┌────────────────────┬┴───────────────────┐
+                     │                    │                     │
+            ┌────────▼────────┐  ┌───────▼───────┐  ┌────────▼────────┐
+            │   PostgreSQL    │  │     Redis     │  │   BullMQ Queue  │
+            │   (Primary)     │  │  (Cache/Lock) │  │  (Background)   │
+            └─────────────────┘  └───────────────┘  └─────────────────┘
 ```
 
 ### 3-Layer Architecture
 
 All modules export standalone functions (no classes).
 
-- **Routes** -- HTTP method matching and middleware attachment
-- **Controllers** -- Input validation (Zod), ownership checks, business logic
-- **Repositories** -- Pure database queries via Prisma
+- **Routes** — HTTP method matching and middleware attachment
+- **Controllers** — Input validation (Zod), ownership checks, business logic
+- **Repositories** — Pure database queries via Prisma
 
 ### Database Schema
 
 ```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────────────┐
-│      User       │       │     Account     │       │      Transaction        │
-├─────────────────┤       ├─────────────────┤       ├─────────────────────────┤
-│ id       (PK)  │──1:N──│ id       (PK)  │──1:N──│ id           (PK)      │
-│ email    (UQ)  │       │ userId   (FK)  │       │ amount                  │
-│ password       │       │ name            │       │ description             │
-│ firstName      │       │ balance (Dec)   │       │ type                    │
-│ lastName       │       │ currency        │       │ status                  │
-│ createdAt      │       │ type            │       │ debitAccountId (FK)     │
-│ updatedAt      │       │ createdAt       │       │ creditAccountId (FK)    │
-└─────────────────┘       │ updatedAt       │       │ idempotencyKey (UQ)     │
-                          └─────────────────┘       │ createdAt               │
-                                                    │ updatedAt               │
-                                                    └─────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                  User                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  id           (PK)  │  String                                               │
+│  email        (UQ)  │  String                                               │
+│  password           │  String                                               │
+│  firstName          │  String                                               │
+│  lastName           │  String                                               │
+│  createdAt          │  DateTime                                             │
+│  updatedAt          │  DateTime                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+        │ 1:N
+        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                Account                                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  id           (PK)  │  String                                               │
+│  userId       (FK)  │  String → User.id                                     │
+│  name               │  String                                               │
+│  balance   (DEC)    │  Decimal(12,2)                                        │
+│  currency           │  String (default: "USD")                               │
+│  type               │  String (CHECKING, SAVINGS)                            │
+│  createdAt          │  DateTime                                             │
+│  updatedAt          │  DateTime                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+        │ 1:N
+        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               Transaction                                    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  id               (PK)  │  String                                           │
+│  amount               │  Decimal(12,2)                                      │
+│  description          │  String                                             │
+│  type                 │  String (TRANSFER, DEPOSIT, WITHDRAWAL)              │
+│  status               │  String (PENDING, COMPLETED, FAILED)                │
+│  debitAccountId  (FK)  │  String? → Account.id                              │
+│  creditAccountId (FK)  │  String? → Account.id                              │
+│  idempotencyKey  (UQ)  │  String? (unique, indexed)                         │
+│  createdAt            │  DateTime                                           │
+│  updatedAt            │  DateTime                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────┐
-│   AuditEvent    │
-├─────────────────┤
-│ id       (PK)  │
-│ eventType      │
-│ userId    (FK) │──────→ User (optional)
-│ metadata       │
-│ createdAt      │
-└─────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               AuditEvent                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  id           (PK)  │  String                                               │
+│  eventType          │  String (indexed)                                     │
+│  userId        (FK)  │  String? → User.id (optional)                        │
+│  metadata           │  String?                                              │
+│  createdAt          │  DateTime (indexed)                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Relationships:**
+
 - `User` 1:N `Account` — A user owns multiple accounts
 - `Account` 1:N `Transaction` — An account has debit and credit transactions
 - `User` 1:N `AuditEvent` — A user has multiple audit events (optional)
 
 **Indexes:**
+
+- `users`: `email` (unique)
 - `accounts`: `userId`
-- `transactions`: `debitAccountId`, `creditAccountId`, `status`, `createdAt`, `idempotencyKey`
+- `transactions`: `debitAccountId`, `creditAccountId`, `status`, `createdAt`, `idempotencyKey` (unique)
 - `audit_events`: `eventType`, `userId`, `createdAt`
 
 ### Money Transfer Flow
 
 ```
-POST /api/transactions
+POST /api/v1/transactions
   │
   ├─ 1. Validate input (Zod schema)
   ├─ 2. Check idempotency key (Redis GET)
@@ -162,50 +192,51 @@ Idempotency keys are backed by Redis with a 1-hour TTL. Duplicate requests retur
 
 Every significant event is logged to the `audit_events` table:
 
-| Event Type | Description |
-|------------|-------------|
-| `USER_REGISTERED` | New user created |
-| `USER_LOGGED_IN` | Successful login |
-| `ACCOUNT_CREATED` | New account opened |
-| `TRANSFER_INITIATED` | Transfer started |
-| `TRANSFER_COMPLETED` | Transfer succeeded |
-| `TRANSFER_FAILED` | Transfer errored |
-| `TRANSFER_INSUFFICIENT_FUNDS` | Balance too low |
-| `IDEMPOTENCY_HIT` | Duplicate request detected |
+| Event Type                | Description              |
+| ------------------------- | ------------------------ |
+| `USER_REGISTERED`         | New user created         |
+| `USER_LOGGED_IN`          | Successful login         |
+| `ACCOUNT_CREATED`         | New account opened       |
+| `TRANSFER_INITIATED`      | Transfer started         |
+| `TRANSFER_COMPLETED`      | Transfer succeeded       |
+| `TRANSFER_FAILED`         | Transfer errored         |
+| `TRANSFER_INSUFFICIENT`   | Balance too low          |
+| `IDEMPOTENCY_HIT`         | Duplicate request        |
 
 ## API Endpoints
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/health` | No | Health check with dependency status |
-| GET | `/health/ready` | No | Kubernetes readiness probe |
-| POST | `/api/users/register` | No | Register new user |
-| POST | `/api/users/login` | No | Login |
-| POST | `/api/users/refresh` | No | Refresh access token |
-| POST | `/api/users/logout` | Yes | Logout (blacklists tokens) |
-| POST | `/api/users/forgot-password` | No | Request password reset email |
-| POST | `/api/users/reset-password` | No | Reset password with token |
-| GET | `/api/users/google` | No | Initiate Google OAuth login |
-| GET | `/api/users/google/callback` | No | Google OAuth callback |
-| POST | `/api/accounts` | Yes | Create checking/savings account |
-| GET | `/api/accounts` | Yes | List all accounts |
-| POST | `/api/transactions` | Yes | Transfer money (idempotent) |
-| GET | `/api/transactions/account/:id` | Yes | Paginated transaction history |
-| GET | `/api/stream/transactions` | Yes | SSE live transaction feed |
-| GET | `/api/audit/recent` | No | Recent audit events |
-| GET | `/api/audit/counts` | No | Event counts by type |
+| Method | Endpoint                        | Auth | Description                  |
+| ------ | ------------------------------- | ---- | ---------------------------- |
+| GET    | `/health`                       | No   | Health check                 |
+| GET    | `/health/ready`                 | No   | Kubernetes readiness probe   |
+| POST   | `/api/v1/users/register`        | No   | Register new user            |
+| POST   | `/api/v1/users/login`           | No   | Login                        |
+| POST   | `/api/v1/users/refresh`         | No   | Refresh access token         |
+| POST   | `/api/v1/users/logout`          | Yes  | Logout (blacklists tokens)   |
+| POST   | `/api/v1/users/forgot-password` | No   | Request password reset       |
+| POST   | `/api/v1/users/reset-password`  | No   | Reset password with token    |
+| GET    | `/api/v1/users/google`          | No   | Initiate Google OAuth        |
+| GET    | `/api/v1/users/google/callback` | No   | Google OAuth callback        |
+| POST   | `/api/v1/accounts`              | Yes  | Create account               |
+| GET    | `/api/v1/accounts`              | Yes  | List all accounts            |
+| POST   | `/api/v1/transactions`          | Yes  | Transfer money (idempotent)  |
+| GET    | `/api/v1/transactions/:id`      | Yes  | Transaction history          |
+| GET    | `/api/v1/stream/transactions`   | Yes  | SSE live transaction feed    |
+| GET    | `/api/v1/audit/recent`          | No   | Recent audit events          |
+| GET    | `/api/v1/audit/counts`          | No   | Event counts by type         |
 
 ## Project Structure
 
 ```
 banking_app_backend-main/
 ├── prisma/
-│   ├── schema.prisma           # Database schema (User, Account, Transaction, AuditEvent)
-│   └── seed.ts                 # Database seeder with demo data
+│   ├── migrations/             # Database migrations
+│   ├── schema.prisma           # Database schema
+│   └── seed.ts                 # Demo data seeder
 ├── src/
-│   ├── server.ts               # Express app, middleware, health checks, graceful shutdown
+│   ├── server.ts               # Express app, middleware, health checks
 │   ├── config/
-│   │   └── google-auth.ts      # Google OAuth Passport.js configuration
+│   │   └── google-auth.ts      # Google OAuth configuration
 │   ├── lib/
 │   │   ├── db.ts               # Prisma client singleton
 │   │   ├── redis.ts            # Redis client with retry strategy
@@ -215,32 +246,36 @@ banking_app_backend-main/
 │   │   ├── cache.ts            # Redis caching service
 │   │   ├── circuit-breaker.ts  # Circuit breaker pattern
 │   │   └── shutdown.ts         # Graceful shutdown handler
-│   ├── types/index.ts          # Zod schemas + TypeScript types
+│   ├── types/
+│   │   └── index.ts            # Zod schemas + TypeScript types
 │   ├── middleware/
 │   │   ├── auth.ts             # JWT authentication + blacklist check
 │   │   ├── rateLimit.ts        # Rate limiters (auth, API, transfer)
 │   │   ├── userRateLimit.ts    # Per-user distributed rate limiting
 │   │   ├── csp.ts              # Content Security Policy headers
 │   │   └── sanitize.ts         # XSS/SQL injection protection
-│   ├── utils/auth.ts           # Password hashing & JWT helpers
+│   ├── utils/
+│   │   └── auth.ts             # Password hashing & JWT helpers
 │   ├── repositories/           # Database queries (Prisma)
 │   ├── controllers/            # Request handlers
 │   ├── services/
 │   │   ├── streaming.service.ts    # SSE client management
-│   │   ├── idempotency.service.ts  # Redis-backed idempotency + distributed locks
+│   │   ├── idempotency.service.ts  # Idempotency + distributed locks
 │   │   ├── audit.service.ts        # Event audit logging
 │   │   ├── queue.service.ts        # BullMQ job queues
-│   │   ├── token.service.ts        # Token blacklist + password reset tokens
+│   │   ├── token.service.ts        # Token blacklist + reset tokens
 │   │   └── email.service.ts        # SMTP email service (Nodemailer)
 │   ├── routes/                 # Route definitions
 │   └── __tests__/              # Jest test suites (38 tests)
 ├── frontend/                   # Next.js admin dashboard
 ├── e2e/                        # Playwright E2E tests
 ├── loadtests/                  # k6 load tests
-├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # GitHub Actions CI pipeline
 ├── docker-compose.yml          # PostgreSQL + Redis + API + Frontend
 ├── Dockerfile                  # Multi-stage production build
-├── playwright.config.ts        # Playwright E2E configuration
+├── playwright.config.ts        # Playwright configuration
 ├── jest.config.ts              # Jest configuration
 ├── package.json
 ├── tsconfig.json
@@ -253,8 +288,8 @@ banking_app_backend-main/
 ### Quick Start (Docker)
 
 ```bash
-git clone <repo-url>
-cd banking_app_backend-main
+git clone https://github.com/rishabhhgit/banking-wallet-mvp.git
+cd banking-wallet-mvp
 
 # Start all services
 docker-compose up -d
@@ -280,8 +315,7 @@ cp .env.example .env
 # Edit .env with your values
 
 # Setup database
-npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 npm run db:seed
 
 # Start development server
@@ -330,7 +364,7 @@ GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
 
-> **Note:** In development mode (`NODE_ENV !== 'production'`), CORS allows all origins for local development convenience. In production, only origins listed in `ALLOWED_ORIGINS` are allowed.
+> **Note:** In development mode (`NODE_ENV !== 'production'`), CORS allows all origins for local development. In production, only `ALLOWED_ORIGINS` are permitted.
 
 > **Note:** If SMTP credentials are not configured, emails are logged to console instead of being sent.
 
@@ -377,11 +411,14 @@ docker-compose down -v
 ### CI/CD (GitHub Actions)
 
 The pipeline runs on every push/PR:
+
 1. Install dependencies
 2. Generate Prisma client
-3. Run test suite against PostgreSQL + Redis
-4. Build production bundle
-5. Build Docker image (main branch only)
+3. Run migrations against PostgreSQL
+4. Run unit tests
+5. Run integration tests
+6. Build production bundle
+7. Build Docker image (main branch only)
 
 ### Health Checks
 
@@ -393,11 +430,12 @@ curl http://localhost:8000/health
 curl http://localhost:8000/health/ready
 ```
 
-Response includes status of PostgreSQL, Redis, job queues, and SSE client count.
+Response includes status of PostgreSQL, Redis, job queues, circuit breakers, and SSE client count.
 
 ### Graceful Shutdown
 
 Server handles SIGTERM/SIGINT:
+
 1. Stops accepting new connections
 2. Waits for in-flight requests to complete
 3. Shuts down BullMQ workers
@@ -406,21 +444,21 @@ Server handles SIGTERM/SIGINT:
 
 ## Key Design Decisions
 
-1. **Functional architecture** -- No classes, all modules export standalone functions
-2. **Serializable isolation** -- Prevents double-spending race conditions on concurrent transfers
-3. **Distributed idempotency** -- Redis-backed with TTL, prevents duplicate transaction processing
-4. **Distributed locks** -- Redis SET NX prevents concurrent transfers on the same accounts
-5. **Structured logging** -- Pino with request IDs for traceability across distributed calls
-6. **Audit trail** -- Every state change logged to database for compliance and debugging
-7. **Health checks** -- Dependency-aware (Postgres, Redis, queues) for orchestrator integration
-8. **Graceful shutdown** -- Clean cleanup of connections and workers on process termination
-9. **Password excluded from responses** -- Repository layer uses Prisma `select` to omit password
-10. **Request ID tracking** -- UUID propagated through logs and responses for debugging
-11. **Token blacklisting** -- Logged-out tokens are revoked via Redis blacklist
-12. **Password reset flow** -- Secure token-based reset with 1-hour expiry, sent via SMTP
-13. **Google OAuth** -- Social login via Passport.js, creates user on first login
-14. **CORS flexibility** -- Allows all origins in dev, restricted in production
-15. **SMTP email service** -- Nodemailer with graceful fallback (logs when unconfigured)
+1. **Functional architecture** — No classes, all modules export standalone functions
+2. **Serializable isolation** — Prevents double-spending race conditions on concurrent transfers
+3. **Distributed idempotency** — Redis-backed with TTL, prevents duplicate transaction processing
+4. **Distributed locks** — Redis SET NX prevents concurrent transfers on the same accounts
+5. **Structured logging** — Pino with request IDs for traceability across distributed calls
+6. **Audit trail** — Every state change logged to database for compliance and debugging
+7. **Health checks** — Dependency-aware (Postgres, Redis, queues) for orchestrator integration
+8. **Graceful shutdown** — Clean cleanup of connections and workers on process termination
+9. **Password excluded from responses** — Repository layer uses Prisma `select` to omit password
+10. **Request ID tracking** — UUID propagated through logs and responses for debugging
+11. **Token blacklisting** — Logged-out tokens are revoked via Redis blacklist
+12. **Password reset flow** — Secure token-based reset with 1-hour expiry, sent via SMTP
+13. **Google OAuth** — Social login via Passport.js, creates user on first login
+14. **CORS flexibility** — Allows all origins in dev, restricted in production
+15. **SMTP email service** — Nodemailer with graceful fallback (logs when unconfigured)
 
 ## Deployment
 
@@ -487,7 +525,7 @@ docker-compose logs -f
 
 ## License
 
-MIT -- see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE)
 
 ## Author
 
