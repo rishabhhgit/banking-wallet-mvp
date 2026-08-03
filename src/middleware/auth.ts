@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/auth";
+import { isTokenBlacklisted } from "../services/token.service";
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
 }
 
-export const authenticateToken = (
+export const authenticateToken = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
@@ -17,6 +18,11 @@ export const authenticateToken = (
     return;
   }
   try {
+    const blacklisted = await isTokenBlacklisted(token);
+    if (blacklisted) {
+      res.status(401).json({ error: "Token has been revoked" });
+      return;
+    }
     const decoded = verifyToken(token);
     req.userId = decoded.userId;
     next();

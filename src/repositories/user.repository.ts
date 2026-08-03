@@ -32,3 +32,23 @@ export const findUserById = async(userId:string)=>{
       }
     })
 }
+
+export const findAllUsers = async () => {
+  const users = await db.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      createdAt: true,
+    },
+  })
+  return { users }
+}
+
+export const updateUserPassword = async (userId: string, hashedPassword: string) => {
+  return db.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword, updatedAt: new Date() },
+  })
+}

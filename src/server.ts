@@ -3,6 +3,8 @@ dotenv.config()
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import passport from 'passport'
+import session from 'express-session'
 import { randomUUID } from 'crypto'
 
 import userRoutes from './routes/user.routes'
@@ -18,6 +20,7 @@ import { logger } from './lib/logger'
 import { getQueueHealth, shutdownQueues } from './services/queue.service'
 import { getEventCounts, getRecentEvents } from './services/audit.service'
 import { getClientCount } from './services/streaming.service'
+import { configureGoogleAuth } from './config/google-auth'
 import { setupShutdownHandlers } from './lib/shutdown'
 import { metrics, metricsMiddleware, getPrometheusMetrics } from './lib/metrics'
 import { initSentry, captureException } from './lib/sentry'
@@ -43,13 +46,31 @@ app.use(helmet())
 app.use(cspMiddleware)
 
 // CORS - restrict to allowed origins
+const isDev = process.env.NODE_ENV !== 'production'
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').filter(Boolean) || []
 app.use(
   cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+    origin: isDev
+      ? true
+      : allowedOrigins.length > 0
+        ? allowedOrigins
+        : false,
     credentials: true,
   })
 )
+
+// Session (required for Passport)
+app.use(session({
+  secret: process.env.JWT_SECRET || 'session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: isDev ? false : true },
+}))
+
+// Passport
+app.use(passport.initialize())
+app.use(passport.session())
+configureGoogleAuth()
 
 // Request logging
 app.use((req, res, next) => {

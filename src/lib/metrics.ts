@@ -238,7 +238,7 @@ export const trackTransfer = (status: 'success' | 'failed' | 'insufficient_funds
   metrics.counter('transfers_total', 1, { status })
 }
 
-export const trackUserAction = (action: 'register' | 'login' | 'logout') => {
+export const trackUserAction = (action: 'register' | 'login' | 'logout' | 'forgot_password' | 'reset_password') => {
   metrics.counter('user_actions_total', 1, { action })
 }
 
