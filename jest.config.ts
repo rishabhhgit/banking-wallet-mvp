@@ -10,7 +10,6 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   clearMocks: true,
-  setupFilesAfterSetup: [],
   testTimeout: 60000,
 }
 
