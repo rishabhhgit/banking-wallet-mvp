@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import * as userController from '../controllers/user.controller'
 import * as userRepository from '../repositories/user.repository'
 import * as authUtils from '../utils/auth'
+import * as twoFactorService from '../services/twoFactor.service'
 
 jest.mock('../repositories/user.repository')
 jest.mock('../utils/auth', () => ({
@@ -11,6 +12,10 @@ jest.mock('../utils/auth', () => ({
   generateRefreshToken: jest.fn(),
   verifyToken: jest.fn(),
   verifyRefreshToken: jest.fn(),
+}))
+jest.mock('../services/twoFactor.service', () => ({
+  isTwoFactorEnabled: jest.fn().mockResolvedValue(false),
+  verifyTwoFactorLogin: jest.fn(),
 }))
 
 const mockReq = (body: Record<string, unknown>) => ({ body } as Request)

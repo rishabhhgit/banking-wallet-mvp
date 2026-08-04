@@ -15,6 +15,17 @@ async function seed() {
   // Create demo users
   const password = await bcrypt.hash('Password123', 12)
 
+  // Create admin user
+  const admin = await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      password,
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'ADMIN',
+    },
+  })
+
   const alice = await prisma.user.create({
     data: {
       email: 'alice@example.com',
@@ -42,7 +53,7 @@ async function seed() {
     },
   })
 
-  console.log(`Created users: ${alice.id}, ${bob.id}, ${charlie.id}`)
+  console.log(`Created users: ${admin.id}, ${alice.id}, ${bob.id}, ${charlie.id}`)
 
   // Create accounts
   const aliceChecking = await prisma.account.create({
@@ -127,6 +138,7 @@ async function seed() {
 
   console.log('\n--- Seed Complete ---')
   console.log('Demo credentials:')
+  console.log('  admin@example.com / Password123 (Admin)')
   console.log('  alice@example.com / Password123')
   console.log('  bob@example.com / Password123')
   console.log('  charlie@example.com / Password123')

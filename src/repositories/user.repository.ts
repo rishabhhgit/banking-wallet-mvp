@@ -52,3 +52,10 @@ export const updateUserPassword = async (userId: string, hashedPassword: string)
     data: { password: hashedPassword, updatedAt: new Date() },
   })
 }
+
+export const updateUserTwoFactor = async (userId: string, enabled: boolean) => {
+  return db.user.update({
+    where: { id: userId },
+    data: { twoFactorEnabled: enabled, updatedAt: new Date() },
+  })
+}

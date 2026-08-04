@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET;
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || "15m";
 const REFRESH_TOKEN_EXPIRES_IN: string = process.env.REFRESH_TOKEN_EXPIRES_IN || "7d";
 
@@ -27,7 +28,7 @@ export const generateToken = (payload: { userId: string }): string => {
 };
 
 export const generateRefreshToken = (payload: { userId: string }): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN } as jwt.SignOptions);
+  return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN } as jwt.SignOptions);
 };
 
 export const verifyToken = (token: string): { userId: string } => {
@@ -35,5 +36,5 @@ export const verifyToken = (token: string): { userId: string } => {
 };
 
 export const verifyRefreshToken = (token: string): { userId: string } => {
-  return jwt.verify(token, JWT_SECRET) as { userId: string };
+  return jwt.verify(token, REFRESH_TOKEN_SECRET) as { userId: string };
 };

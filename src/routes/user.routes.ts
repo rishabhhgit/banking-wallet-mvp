@@ -9,7 +9,7 @@ import {
   resetPassword,
   googleCallback,
 } from '../controllers/user.controller'
-import { refreshLimiter } from '../middleware/rateLimit'
+import { refreshLimiter, authLimiter } from '../middleware/rateLimit'
 import { authenticateToken } from '../middleware/auth'
 
 
@@ -190,7 +190,7 @@ router.post('/logout', authenticateToken, logoutUser)
  *       400:
  *         description: Invalid input
  */
-router.post('/forgot-password', forgotPassword)
+router.post('/forgot-password', authLimiter, forgotPassword)
 
 /**
  * @swagger

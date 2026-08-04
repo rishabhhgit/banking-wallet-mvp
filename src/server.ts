@@ -11,8 +11,10 @@ import userRoutes from './routes/user.routes'
 import accountRoutes from './routes/account.routes'
 import transactionRoutes from './routes/transaction.routes'
 import streamRoutes from './routes/stream.routes'
+import twoFactorRoutes from './routes/twoFactor.routes'
+import adminRoutes from './routes/admin.routes'
 import { authLimiter, apiLimiter } from './middleware/rateLimit'
-import { userApiLimiter, distributedApiLimiter } from './middleware/userRateLimit'
+import { userApiLimiter } from './middleware/userRateLimit'
 import { cspMiddleware } from './middleware/csp'
 import { sanitizeInput } from './middleware/sanitize'
 import { redis } from './lib/redis'
@@ -185,6 +187,8 @@ v1Router.use('/users', authLimiter, userRoutes)
 v1Router.use('/accounts', accountRoutes)
 v1Router.use('/transactions', transactionRoutes)
 v1Router.use('/stream', streamRoutes)
+v1Router.use('/2fa', twoFactorRoutes)
+v1Router.use('/admin', adminRoutes)
 
 // Audit endpoints on v1
 v1Router.get('/audit/recent', async (req, res) => {

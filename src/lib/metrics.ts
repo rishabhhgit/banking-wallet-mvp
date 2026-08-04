@@ -128,7 +128,10 @@ class MetricsService {
 
   histogram(name: string, value: number, labels?: Record<string, string>) {
     const key = this.getMetricKey(name, labels)
-    const values = this.histograms.get(key) || []
+    let values = this.histograms.get(key)
+    if (!Array.isArray(values)) {
+      values = []
+    }
     values.push(value)
     // Keep only last 10000 values to prevent memory issues
     if (values.length > 10000) {
